@@ -1,5 +1,5 @@
 <?php 
-$databaseHost = 'localhost:3308';
+$databaseHost = 'localhost';
 $databaseName = 'poli';
 $databaseUsername = 'root';
 $databasePassword = '';
