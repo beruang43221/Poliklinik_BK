@@ -1,5 +1,5 @@
 <?php				
-	include '../../koneksi.php'; //menghubungkan ke file koneksi untuk ke database
+	include '../../../../koneksi.php'; //menghubungkan ke file koneksi untuk ke database
 	$id = $_GET['id']; //menampung id
 
 	//query hapus
