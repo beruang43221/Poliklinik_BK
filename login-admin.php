@@ -1,3 +1,30 @@
+<?php
+include 'koneksi.php';
+session_start();
+ 
+if (isset($_SESSION['username'])) {
+    header("Location: menu/admin/");
+    exit();
+}
+ 
+if (isset($_POST['submit'])) {
+    $username = mysqli_real_escape_string($mysqli, $_POST['username']);
+    $password = $_POST['password'];
+ 
+    $sql = "SELECT * FROM user WHERE username='$username' AND password='$password'";
+    $result = mysqli_query($mysqli, $sql);
+ 
+    if ($result->num_rows > 0) {
+        $row = mysqli_fetch_assoc($result);
+        $_SESSION['username'] = $row['username'];
+        header("Location: menu/admin/");
+        exit();
+    } else {
+        echo "<script>alert('Username atau password Anda salah. Silakan coba lagi!')</script>";
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,27 +46,28 @@
   <!-- /.login-logo -->
   <div class="card card-outline card-primary">
     <div class="card-header text-center">
-      <a href="../../index2.html" class="h1"><b>Poli</b>klinik</a>
+      <a href="index.php" class="h1"><b>Poli</b>klinik</a>
     </div>
     <div class="card-body">
     
       <p class="login-box-msg">Sign in</p>
 
       <?php
-        if (count($errors) > 0) {
+          $errors = array(); // Menambahkan inisialisasi variabel $errors
+          if (count($errors) > 0) {
+              foreach ($errors as $showerror) {
       ?>
-        <div class="alert alert-danger text-center" style="font-weight: 600;">
-          <?php
-            foreach ($errors as $showerror) {
-              echo $showerror;
-            }
-          ?>
-        </div>
+          <div class="alert alert-danger text-center" style="font-weight: 600;">
+              <?php
+                  echo $showerror;
+              ?>
+          </div>
       <?php
-        }
+              }
+          }
       ?>
 
-      <form action="../../index3.html" method="post">
+      <form action="" method="post">
         <div class="input-group mb-3">
           <input type="text" name="username" class="form-control" placeholder="Username | Case Sensitive">
           <div class="input-group-append">
@@ -67,7 +95,7 @@
           </div>
           <!-- /.col -->
           <div class="col-4">
-            <button type="submit" name="login" class="btn btn-primary btn-block">Sign In</button>
+            <button type="submit" name="submit" class="btn btn-primary btn-block">Sign In</button>
           </div>
           <!-- /.col -->
         </div>
@@ -96,5 +124,3 @@
 <script src="assets/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>
 </body>
 </html>
-
-
