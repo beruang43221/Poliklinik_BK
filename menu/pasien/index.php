@@ -5,7 +5,7 @@ include_once("../../koneksi.php");
 if (isset($_SESSION['login'])) {
   $_SESSION['login'] = true;
 } else{
-  echo "<meta http-equiv='refresh' content='0; url= ../../auth/login-dokter.php'>";
+  echo "<meta http-equiv='refresh' content='0; url= ../../auth/login-pasien.php'>";
   die();
 }
 
@@ -13,7 +13,7 @@ if (isset($_SESSION['login'])) {
 $nama = $_SESSION['username'];
 $akses = $_SESSION['akses'];
 
-if ($akses != 'dokter'){
+if ($akses != 'pasien'){
   echo "<meta http-equiv='refresh' content='0; url= ../..'>";
   die();
 }

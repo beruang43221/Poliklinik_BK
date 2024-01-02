@@ -1,45 +1,29 @@
-<?php
-include 'koneksi.php';
+<?php 
 session_start();
- 
-if (isset($_SESSION['username'])) {
-    header("Location: menu/admin/");
-    exit();
-}
- 
-if (isset($_POST['submit'])) {
-    $username = mysqli_real_escape_string($mysqli, $_POST['username']);
-    $password = $_POST['password'];
- 
-    $sql = "SELECT * FROM user WHERE username='$username' AND password='$password'";
-    $result = mysqli_query($mysqli, $sql);
- 
-    if ($result->num_rows > 0) {
-        $row = mysqli_fetch_assoc($result);
-        $_SESSION['username'] = $row['username'];
-        header("Location: menu/admin/");
-        exit();
-    } else {
-        echo "<script>alert('Username atau password Anda salah. Silakan coba lagi!')</script>";
-    }
+include_once("../koneksi.php");
+
+if (isset($_SESSION['login'])){
+  echo "<meta http-equiv='refresh' content='0; url= ../.'>";
+  die();
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AdminLTE 3 | Log in (v2)</title>
+  <title>Poliklinik</title>
 
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
   <!-- Font Awesome -->
-  <link rel="stylesheet" href="assets/AdminLTE-3.2.0/plugins/fontawesome-free/css/all.min.css">
+  <link rel="stylesheet" href="../assets/AdminLTE-3.2.0/plugins/fontawesome-free/css/all.min.css">
   <!-- icheck bootstrap -->
-  <link rel="stylesheet" href="assets/AdminLTE-3.2.0/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
+  <link rel="stylesheet" href="../assets/AdminLTE-3.2.0/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
   <!-- Theme style -->
-  <link rel="stylesheet" href="assets/AdminLTE-3.2.0/dist/css/adminlte.min.css">
+  <link rel="stylesheet" href="../assets/AdminLTE-3.2.0/dist/css/adminlte.min.css">
 </head>
 <body class="hold-transition login-page">
 <div class="login-box">
@@ -51,25 +35,14 @@ if (isset($_POST['submit'])) {
     <div class="card-body">
     
       <p class="login-box-msg">Sign in</p>
-
-      <?php
-          $errors = array(); // Menambahkan inisialisasi variabel $errors
-          if (count($errors) > 0) {
-              foreach ($errors as $showerror) {
-      ?>
-          <div class="alert alert-danger text-center" style="font-weight: 600;">
-              <?php
-                  echo $showerror;
-              ?>
-          </div>
-      <?php
-              }
-          }
-      ?>
+      <?php if (isset($_SESSION['error'])): ?>
+        <p style="color:red; font-size: italic; margin-bottom: 1rem;"><?php echo $_SESSION['error']; ?></p>
+        <?php unset($_SESSION['error']); ?>
+      <?php endif; ?>
 
       <form action="" method="post">
         <div class="input-group mb-3">
-          <input type="text" name="username" class="form-control" placeholder="Username | Case Sensitive">
+          <input type="text" name="nama" class="form-control" placeholder="Username | Case Sensitive">
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-envelope"></span>
@@ -77,7 +50,7 @@ if (isset($_POST['submit'])) {
           </div>
         </div>
         <div class="input-group mb-3">
-          <input type="password" name="password" class="form-control" placeholder="Password | Case Sensitive">
+          <input type="password" name="alamat" class="form-control" placeholder="Password | Case Sensitive">
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-lock"></span>
@@ -124,3 +97,46 @@ if (isset($_POST['submit'])) {
 <script src="assets/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>
 </body>
 </html>
+
+
+<?php
+if (isset($_POST['submit'])) {
+  $username = stripslashes($_POST['nama']);
+  $password = $_POST['alamat'];
+  if ($username == 'admin'){
+    if ($password == 'admin'){
+      $_SESSION['login'] = true;
+      $_SESSION['id'] = null;
+      $_SESSION['username'] = 'admin';
+      $_SESSION['akses'] = 'admin';
+      echo "<meta http-equiv='refresh' content='0; url= ../menu/admin'>";
+      die();
+    }
+  } else {
+    $cek_username = $pdo->prepare("SELECT * FROM dokter WHERE nama = '$username';");
+    try {
+      $cek_username->execute();
+      if($cek_username->rowCount()==1){
+        $baris = $cek_username->fetchAll(PDO::FETCH_ASSOC);
+        if ($password == $baris[0]['alamat']){
+          $_SESSION['login'] = true;
+          $_SESSION['id'] = $baris[0]['id'];
+          $_SESSION['username'] = $baris[0]['nama'];
+          $_SESSION['akses'] = 'dokter';
+          echo "<meta http-equiv='refresh' content='0; url= ../menu/dokter'>";
+          die();
+        }
+      }
+    } catch (PDOException $e) {
+      $_SESSION['error'] = $e->getMessage();
+      echo "<meta http-equiv='refresh' content='0;' >";
+      die();
+    }
+  }
+
+  $_SESSION['error'] = 'Username dan Password Tidak Cocok';
+  echo "<meta http-equiv='refresh' content='0;' >";
+  die();
+}  
+
+?>

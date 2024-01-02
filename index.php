@@ -59,20 +59,11 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
         <div class="row mt-5 justify-content-center">
           <div class="col-sm-3 hovered-card">
-            <div class="card">
-              <div class="card-body">
-                <h5 class="card-title font-weight-bold mb-3">Login Sebagai Admin</h5>
-                <p class="card-text">Jika anda seorang Admin. Login disini</p>
-                <a href="login-admin.php" class="btn btn-primary">Login</a>
-              </div>
-            </div>
-          </div>
-          <div class="col-sm-3 hovered-card">
           <div class="card">
               <div class="card-body">
                 <h5 class="card-title font-weight-bold mb-3">Login Sebagai Dokter</h5>
                 <p class="card-text">Jika anda seorang Dokter. Login disini</p>
-                <a href="#" class="btn btn-primary">Login</a>
+                <a href="auth/login-dokter.php" class="btn btn-primary">Login</a>
               </div>
             </div>
           </div>
@@ -81,7 +72,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
               <div class="card-body">
                 <h5 class="card-title font-weight-bold mb-3">Login Sebagai Pasien</h5>
                 <p class="card-text">Jika anda seorang Pasien. Login disini</p>
-                <a href="#" class="btn btn-primary">Login</a>
+                <a href="auth/login-pasien.php" class="btn btn-primary">Login</a>
               </div>
             </div>
           </div>
