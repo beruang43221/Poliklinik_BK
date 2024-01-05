@@ -59,7 +59,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
     include("components/sidebar.php");
 ?>
 <div class="content-wrapper">
-
+    <?php
+    include("pages/poli_pasien.php");
+    ?>
 </div>
 
 
