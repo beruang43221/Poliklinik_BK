@@ -35,7 +35,7 @@
             <a href="jadwal.php" class="nav-link">
             <i class="nav-icon fas fa-hospital"></i>
               <p>
-                Jadwal Periksa
+                Poli
                 <span class="right badge badge-warning">Pasien</span>
               </p>
             </a>
