@@ -1,21 +1,14 @@
-<?php 
+<?php
 session_start();
-include_once("../../koneksi.php");
+if (isset($_SESSION['login']) && isset($_SESSION['akses'])) {
+  $akses = $_SESSION['akses'];
 
-if (isset($_SESSION['login'])) {
-  $_SESSION['login'] = true;
-} else{
-  echo "<meta http-equiv='refresh' content='0; url= ../../auth/login-dokter.php'>";
-  die();
-}
+  // Redirect ke halaman sesuai dengan peran (akses) pengguna
+  if ($akses != 'dokter') {
+    header('Location: ../../auth/validation.php');
+    die();
+  }
 
-
-$nama = $_SESSION['username'];
-$akses = $_SESSION['akses'];
-
-if ($akses != 'dokter'){
-  echo "<meta http-equiv='refresh' content='0; url= ../..'>";
-  die();
 }
 ?>
 

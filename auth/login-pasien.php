@@ -1,10 +1,10 @@
-<?php 
+<?php
 session_start();
-include_once("../koneksi.php");
+require_once ('../koneksi.php');
 
-if (isset($_SESSION['login'])){
-  echo "<meta http-equiv='refresh' content='0; url= ../.'>";
-  die();
+if (isset($_SESSION['login'])) {
+  header('Location: ../auth/validation.php');
+  exit();
 }
 ?>
 
@@ -97,44 +97,43 @@ if (isset($_SESSION['login'])){
 
 
 <?php
+
 if (isset($_POST['submit'])) {
   $username = stripslashes($_POST['nama']);
   $password = $_POST['alamat'];
-  if ($username == 'admin'){
-    if ($password == 'admin'){
-      $_SESSION['login'] = true;
-      $_SESSION['id'] = null;
-      $_SESSION['username'] = 'admin';
-      $_SESSION['akses'] = 'admin';
-      echo "<meta http-equiv='refresh' content='0; url= ../menu/admin'>";
-      die();
-    }
+
+  if ($username == 'admin' && $password == 'admin') {
+    // Jika login sebagai admin berhasil
+    $_SESSION['login'] = true;
+    $_SESSION['id'] = null;
+    $_SESSION['username'] = 'admin';
+    $_SESSION['akses'] = 'admin';
+    header('Location: ../auth/validation.php');
+    exit;
   } else {
-    $cek_username = $pdo->prepare("SELECT * FROM pasien WHERE nama = '$username';");
-    try {
-      $cek_username->execute();
-      if($cek_username->rowCount()==1){
-        $baris = $cek_username->fetchAll(PDO::FETCH_ASSOC);
-        if ($password == $baris[0]['alamat']){
-          $_SESSION['login'] = true;
-          $_SESSION['id'] = $baris[0]['id'];
-          $_SESSION['username'] = $baris[0]['nama'];
-          $_SESSION['no_rm'] = $baris[0]['no_rm'];
-          $_SESSION['akses'] = 'pasien';
-          echo "<meta http-equiv='refresh' content='0; url= ../menu/pasien'>";
-          die();
-        }
+    // Melakukan query ke database
+    $sql = "SELECT * FROM pasien WHERE nama = '$username'";
+    $result = mysqli_query($mysqli, $sql);
+
+    if ($result && mysqli_num_rows($result) == 1) {
+      // Jika username ditemukan dalam tabel pasien
+      $row = mysqli_fetch_assoc($result);
+      if ($password == $row['alamat']) {
+        // Jika password cocok
+        $_SESSION['login'] = true;
+        $_SESSION['id'] = $row['id'];
+        $_SESSION['username'] = $row['nama'];
+        $_SESSION['no_rm'] = $row['no_rm'];
+        $_SESSION['akses'] = 'pasien';
+        header('Location: ../auth/validation.php');
+        exit;
       }
-    } catch (PDOException $e) {
-      $_SESSION['error'] = $e->getMessage();
-      echo "<meta http-equiv='refresh' content='0;' >";
-      die();
     }
   }
 
+  // Jika username atau password tidak cocok
   $_SESSION['error'] = 'Username dan Password Tidak Cocok';
   echo "<meta http-equiv='refresh' content='0;' >";
   die();
-}  
-
+}
 ?>

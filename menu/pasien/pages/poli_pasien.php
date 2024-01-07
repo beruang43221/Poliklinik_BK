@@ -1,30 +1,34 @@
 <?php
-include '../../koneksi.php';
-require 'daftar_poli.php';
+include '../../koneksi.php'; // Mengimpor file koneksi.php
+require 'daftar_poli.php'; // Mengimpor file daftar_poli.php
 
-if (isset($_SESSION['login'])) {
-  $_SESSION['login'] = true;
-} else {
-  echo "<meta http-equiv='refresh' content='0; url= ../../auth/login-pasien.php'>";
-  die();
+if (isset($_SESSION['login']) && isset($_SESSION['akses'])) {
+  $akses = $_SESSION['akses'];
+
+  // Redirect ke halaman sesuai dengan peran (akses) pengguna
+  if ($akses != 'pasien') {
+    header('Location: ../../auth/validation.php');
+    die();
+  }
 }
 
-$id_pasien = $_SESSION['id'];
-$no_rm = $_SESSION['no_rm'];
-$nama = $_SESSION['username'];
-$akses = $_SESSION['akses'];
+$id_pasien = $_SESSION['id']; // Mendapatkan ID pasien dari sesi
+$no_rm = $_SESSION['no_rm']; // Mendapatkan nomor rekam medis pasien dari sesi
+$nama = $_SESSION['username']; // Mendapatkan nama pasien dari sesi
+$akses = $_SESSION['akses']; // Mendapatkan akses pasien dari sesi
 
-$url = $_SERVER['REQUEST_URI'];
-$url = explode("/", $url);
-$id_poli = $url[count($url) - 1];
+$url = $_SERVER['REQUEST_URI']; // Mendapatkan URL yang sedang diakses
+$url = explode("/", $url); // Membagi URL menjadi array berdasarkan tanda "/"
+$id_poli = $url[count($url) - 1]; // Mendapatkan ID poli dari URL
 
 if ($akses != 'pasien') {
   echo "<meta http-equiv='refresh' content='0; url= ../../auth/login-pasien.php'>";
   die();
 }
 
-if (isset($_POST['submit'])) {
+if (isset($_POST['submit'])) { // Memeriksa apakah tombol submit telah ditekan
   if (isset($_POST['id_jadwal']) && $_POST['id_jadwal'] == "900") {
+    // Memeriksa apakah jadwal dipilih atau tidak
     echo "
       <script>
         alert('Jadwal Tidak Boleh Kosong!');
@@ -34,7 +38,7 @@ if (isset($_POST['submit'])) {
     exit;
   }
 
-  if (daftarPoli($_POST) > 0) {
+  if (daftarPoli($_POST, $mysqli) > 0) { // Memanggil fungsi daftarPoli() dengan parameter $_POST
     echo "
       <script>
         alert('Berhasil Mendaftar Poli');
@@ -94,17 +98,22 @@ if (isset($_POST['submit'])) {
                                 <select class="form-control" id="inputPoli" required>
                                     <option value="" disabled selected>Open Menu</option>
                                     <?php 
-                                    $data = $pdo->prepare("SELECT * FROM poli");
-                                    $data->execute();
-                                    if ($data->rowCount() == 0) {
+                                    // Query SQL untuk mengambil semua data dari tabel "poli"
+                                    $query = "SELECT * FROM poli";
+                                    // Menjalankan query SQL menggunakan objek koneksi mysqli
+                                    $result = mysqli_query($mysqli, $query); 
+                                    
+                                    if (mysqli_num_rows($result) == 0) {
                                       echo "<option>Tidak Ada Poli</option>";
                                     } else {
-                                      while($d = $data->fetch()) {
+                                      while ($d = mysqli_fetch_assoc($result)) {
                                         ?>
                                         <option value="<?php echo $d['id']; ?>"><?php echo $d['nama_poli']; ?></option>
                                         <?php
                                       }
                                     }
+                                    
+
                                     ?>
                                 </select>
                             </div>
@@ -150,54 +159,66 @@ if (isset($_POST['submit'])) {
                                 </thead>
                                 <tbody>
                                     <?php
-                                    $poli = $pdo->prepare("SELECT d.nama_poli as poli_nama,
-                                                                  c.nama as dokter_nama,
-                                                                  b.hari as jadwal_hari,
-                                                                  b.jam_mulai as jadwal_mulai,
-                                                                  b.jam_selesai as jadwal_selesai,
-                                                                  a.no_antrian as antrian,
-                                                                  a.id as poli_id
-                                                                  
-                                                                  FROM daftar_poli as a 
-                                                                  
-                                                                  INNER JOIN jadwal_periksa as b 
-                                                                    ON a.id_jadwal = b.id
-                                                                  INNER JOIN dokter as c 
-                                                                    ON b.id_dokter = c.id
-                                                                  INNER JOIN poli as d 
-                                                                    ON c.id_poli = d.id
-                                                                  WHERE a.id_pasien = $id_pasien
-                                                                  ORDER BY a.id desc");
+                                    // Query SQL untuk mengambil data yang diinginkan
+                                    $query = "SELECT  d.nama_poli as poli_nama,
+                                                      c.nama as dokter_nama,
+                                                      b.hari as jadwal_hari,
+                                                      b.jam_mulai as jadwal_mulai,
+                                                      b.jam_selesai as jadwal_selesai,
+                                                      a.no_antrian as antrian,
+                                                      a.id as poli_id
+                                    
+                                              FROM daftar_poli as a 
+                                    
+                                              INNER JOIN jadwal_periksa as b 
+                                                ON a.id_jadwal = b.id
+                                              INNER JOIN dokter as c 
+                                                ON b.id_dokter = c.id
+                                              INNER JOIN poli as d 
+                                                ON c.id_poli = d.id
+                                              WHERE a.id_pasien = $id_pasien
+                                              ORDER BY a.id desc"; 
 
-                                    $poli->execute();
+                                    // Menjalankan query SQL menggunakan objek koneksi mysqli
+                                    $result = mysqli_query($mysqli, $query);
+
+                                    // Inisialisasi variabel untuk nomor urut
                                     $no = 0;
-                                    if ($poli->rowCount() == 0) {
+
+                                    // Memeriksa jumlah baris yang dikembalikan oleh hasil query
+                                    if (mysqli_num_rows($result) == 0) {
+                                      // Jika tidak ada data, maka tampilkan pesan "Tidak Ada Data"
                                       echo "Tidak Ada Data";
                                     } else {
-                                      while($p = $poli->fetch()) {
-                                    ?>
+                                      // Jika ada data, maka tampilkan data dalam bentuk tabel dengan menggunakan loop while
+                                      while ($p = mysqli_fetch_assoc($result)) {
+                                        // Memulai baris tabel
+                                        ?>
                                     
                                     <tr>
                                       <th scope="row">
                                         <?php
-                                          ++$no;
-                                          if ($no == 1) {
-                                            echo "<span class='badge badge-info'>New</span>";
-                                          } else {
-                                            echo $no;
-                                          }
+                                        // Menambahkan nomor urut pada kolom pertama
+                                        ++$no;
+                                        if ($no == 1) {
+                                          // Jika nomor urut adalah 1, tambahkan label "New" dengan class "badge-info"
+                                          echo "<span class='badge badge-info'>New</span>";
+                                        } else {
+                                          // Jika nomor urut bukan 1, tampilkan nomor urut tersebut
+                                          echo $no;
+                                        }
                                         ?>
                                       </th>
-                                      <td><?= $p['poli_nama']?></td>
-                                      <td><?= $p['dokter_nama']?></td>
-                                      <td><?= $p['jadwal_hari']?></td>
-                                      <td><?= $p['jadwal_mulai']?></td>
-                                      <td><?= $p['jadwal_selesai']?></td>
-                                      <td><?= $p['antrian']?></td>
+                                      <td><?= $p['poli_nama']?></td> 
+                                      <td><?= $p['dokter_nama']?></td> 
+                                      <td><?= $p['jadwal_hari']?></td> 
+                                      <td><?= $p['jadwal_mulai']?></td> 
+                                      <td><?= $p['jadwal_selesai']?></td> 
+                                      <td><?= $p['antrian']?></td> 
                                     </tr>
                                     <?php
+                                        }
                                       }
-                                    }
                                     ?>
                                 </tbody>
                             </table>
