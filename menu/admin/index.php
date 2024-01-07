@@ -1,3 +1,17 @@
+<?php
+session_start();
+if (isset($_SESSION['login']) && isset($_SESSION['akses'])) {
+  $akses = $_SESSION['akses'];
+
+  // Redirect ke halaman sesuai dengan peran (akses) pengguna
+  if ($akses != 'admin') {
+    header('Location: ../../auth/validation.php');
+    die();
+  }
+
+}
+?>
+
 <!DOCTYPE html>
 <!--
 This is a starter template page. Use this page to start your new project from

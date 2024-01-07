@@ -1,25 +1,20 @@
 <?php
-function daftarPoli($data)
+function daftarPoli($data, $mysqli)
 {
-    global $pdo;
-
     try {
         $id_pasien = $data["id_pasien"];
         $id_jadwal = $data["id_jadwal"];
         $keluhan = $data["keluhan"];
-        $no_antrian = getLatestNoAntrian($id_jadwal, $pdo) + 1;
+        $no_antrian = getLatestNoAntrian($id_jadwal, $mysqli) + 1;
 
-        $query = "INSERT INTO daftar_poli VALUES (NULL, :id_pasien, :id_jadwal, :keluhan, :no_antrian)";
-        $stmt = $pdo->prepare($query);
-        $stmt->bindParam(':id_pasien', $id_pasien);
-        $stmt->bindParam(':id_jadwal', $id_jadwal);
-        $stmt->bindParam(':keluhan', $keluhan);
-        $stmt->bindParam(':no_antrian', $no_antrian);
+        $query = "INSERT INTO daftar_poli VALUES (NULL, ?, ?, ?, ?)";
+        $stmt = mysqli_prepare($mysqli, $query);
+        mysqli_stmt_bind_param($stmt, "iiii", $id_pasien, $id_jadwal, $keluhan, $no_antrian);
 
-        if ($stmt->execute()) {
-            return $stmt->rowCount();
+        if (mysqli_stmt_execute($stmt)) {
+            return mysqli_stmt_affected_rows($stmt);
         } else {
-            echo "Error updating record:" . $stmt->errorInfo()[2];
+            echo "Error updating record:" . mysqli_stmt_error($stmt);
             return -1;
         }
     } catch (\Exception $e) {
@@ -27,13 +22,16 @@ function daftarPoli($data)
     }
 }
 
-function getLatestNoAntrian($id_jadwal, $pdo)
+function getLatestNoAntrian($id_jadwal, $mysqli)
 {
-    $latestNoAntrian = $pdo->prepare("SELECT MAX(no_antrian) as max_no_antrian FROM daftar_poli WHERE id_jadwal = :id_jadwal");
-    $latestNoAntrian->bindParam(':id_jadwal', $id_jadwal);
-    $latestNoAntrian->execute();
+    $latestNoAntrianQuery = "SELECT MAX(no_antrian) as max_no_antrian FROM daftar_poli WHERE id_jadwal = ?";
+    $stmt = mysqli_prepare($mysqli, $latestNoAntrianQuery);
+    mysqli_stmt_bind_param($stmt, "i", $id_jadwal);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_bind_result($stmt, $max_no_antrian);
+    mysqli_stmt_fetch($stmt);
+    mysqli_stmt_close($stmt);
 
-    $row = $latestNoAntrian->fetch();
-    return $row['max_no_antrian'] ? $row['max_no_antrian'] : 0;
+    return $max_no_antrian ? $max_no_antrian : 0;
 }
 ?>

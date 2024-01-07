@@ -1,3 +1,12 @@
+<?php
+session_start();
+
+if (isset($_SESSION['login'])) {
+  header('Location: auth/validation.php');
+  exit();
+}
+?>
+
 <!DOCTYPE html>
 <!--
 This is a starter template page. Use this page to start your new project from

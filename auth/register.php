@@ -3,38 +3,46 @@ session_start();
 include_once("../koneksi.php");
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+  // Mengambil data dari form
   $nama = $_POST['nama'];
   $alamat = $_POST['alamat'];
   $no_ktp = $_POST['no_ktp'];
   $no_hp = $_POST['no_hp'];
 
   try {
-    $query_cek_pasien = "SELECT id, nama, no_rm FROM pasien WHERE no_ktp = :no_ktp";
-    $stmt_cek_pasien = $pdo->prepare($query_cek_pasien);
-    $stmt_cek_pasien->bindParam(':no_ktp', $no_ktp);
+    // Mengecek apakah pasien sudah terdaftar berdasarkan nomor KTP
+    $query_cek_pasien = "SELECT id, nama, no_rm FROM pasien WHERE no_ktp = ?";
+    $stmt_cek_pasien = $mysqli->prepare($query_cek_pasien);
+    $stmt_cek_pasien->bind_param('s', $no_ktp);
     $stmt_cek_pasien->execute();
+    $stmt_cek_pasien->store_result();
 
-    if ($stmt_cek_pasien->rowCount() > 0) {
-      $row = $stmt_cek_pasien->fetch();
+    if ($stmt_cek_pasien->num_rows > 0) {
+      $stmt_cek_pasien->bind_result($id, $nama_pasien, $no_rm);
+      $stmt_cek_pasien->fetch();
 
-      if ($row['nama'] != $nama) {
+      if ($nama_pasien != $nama) {
+        // Jika nama pada form tidak sesuai dengan nama yang terdaftar dalam database
         echo "<script>alert(`Nama Pasien Tidak Sesuai Dengan KTP yang Terdaftar.`);</script>";
         echo "<meta http-equiv='refresh' content='0; url= register.php'>";
         die();
       }
+
+      // Jika pasien sudah terdaftar
       $_SESSION['signup'] = true;
       $_SESSION['id'] = true;
       $_SESSION['username'] = $nama;
-      $_SESSION['no_rm'] = $row['no_rm'];
+      $_SESSION['no_rm'] = $no_rm;
       $_SESSION['akses'] = 'pasien';
 
       echo "<meta http-equiv='refresh' content='0; url= ../menu/pasien'>";
       die();
     }
 
+    // Mengambil nomor rekam medis terakhir
     $queryGetRm = "SELECT MAX(SUBSTRING(no_rm, 8)) as last_queue_number FROM pasien";
-    $stmtGetRm = $pdo->query($queryGetRm);
-    $rowRM = $stmtGetRm->fetch();
+    $stmtGetRm = $mysqli->query($queryGetRm);
+    $rowRM = $stmtGetRm->fetch_assoc();
     $lastQueueNumber = $rowRM['last_queue_number'];
 
     $lastQueueNumber = $lastQueueNumber ? $lastQueueNumber : 0;
@@ -43,19 +51,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $newQueueNumber = $lastQueueNumber + 1;
 
+    // Membuat nomor rekam medis baru
     $no_rm = $tahun_bulan . "-" . str_pad($newQueueNumber, 3, '0', STR_PAD_LEFT);
 
-    $query = "INSERT INTO pasien (nama, alamat, no_ktp, no_hp, no_rm) VALUES (:nama, :alamat, :no_ktp, :no_hp, :no_rm)";
-    $stmt = $pdo->prepare($query);
-    $stmt->bindParam(':nama', $nama);
-    $stmt->bindParam(':alamat', $alamat);
-    $stmt->bindParam(':no_ktp', $no_ktp);
-    $stmt->bindParam(':no_hp', $no_hp);
-    $stmt->bindParam(':no_rm', $no_rm);
+    // Menyimpan data pasien baru ke database
+    $query = "INSERT INTO pasien (nama, alamat, no_ktp, no_hp, no_rm) VALUES (?, ?, ?, ?, ?)";
+    $stmt = $mysqli->prepare($query);
+    $stmt->bind_param('sssss', $nama, $alamat, $no_ktp, $no_hp, $no_rm);
 
     if ($stmt->execute()) {
       $_SESSION['signup'] = true;
-      $_SESSION['id'] = $pdo->lastInsertId();
+      $_SESSION['id'] = $mysqli->insert_id;
       $_SESSION['username'] = $nama;
       $_SESSION['no_rm'] = $no_rm;
       $_SESSION['akses'] = 'pasien';
@@ -63,9 +69,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       echo "<meta http-equiv='refresh' content='0; url= ../menu/pasien'>";
       die();
     } else {
-      echo "Error: " . $query . "<br>" . $stmt->errorInfo();
+      echo "Error: " . $stmt->error;
     }
-  } catch (PDOException $e) {
+  } catch (Exception $e) {
     echo "Error: " . $e->getMessage();
   }
 }
